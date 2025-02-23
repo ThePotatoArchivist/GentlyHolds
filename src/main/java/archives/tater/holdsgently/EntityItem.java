@@ -17,8 +17,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class EntityItem extends Item {
 
     public static final String[] REMOVE_TAGS = {
@@ -40,6 +38,8 @@ public class EntityItem extends Item {
             "SleepingZ"
     };
 
+    public static final String UNINITIALIZED = "Unitialized";
+
     public EntityItem(Settings settings) {
         super(settings.maxCount(1));
     }
@@ -58,18 +58,28 @@ public class EntityItem extends Item {
 
         var entityType = getEntityType(stack.getNbt());
 
-        if (entityType != null && entityType.spawnFromItemStack(
-                serverWorld,
-                stack,
-                context.getPlayer(),
-                targetPos,
-                SpawnReason.SPAWN_EGG,
-                true,
-                !Objects.equals(pos, targetPos) && direction == Direction.UP
-        ) != null) {
-            stack.decrement(1);
-            world.emitGameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, pos);
+        if (entityType == null) return ActionResult.CONSUME;
+
+        var nbt = stack.getNbt();
+        if (nbt.getBoolean(UNINITIALIZED)) {
+            if (entityType.spawnFromItemStack(
+                    serverWorld,
+                    stack,
+                    context.getPlayer(),
+                    targetPos,
+                    SpawnReason.SPAWN_EGG,
+                    true,
+                    pos != targetPos && direction == Direction.UP
+            ) == null) return ActionResult.CONSUME;
+        } else {
+            var entity = EntityType.getEntityFromNbt(nbt.getCompound(EntityType.ENTITY_TAG_KEY), world).orElse(null);
+            if (entity == null) return ActionResult.CONSUME;
+            entity.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0f, 0f);
+            world.spawnEntity(entity);
         }
+
+        stack.decrement(1);
+        world.emitGameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, pos);
 
         return ActionResult.CONSUME;
     }
@@ -105,6 +115,7 @@ public class EntityItem extends Item {
         var entityTag = new NbtCompound();
         entityTag.putString(Entity.ID_KEY, Registries.ENTITY_TYPE.getId(entityType).toString());
         stack.setSubNbt(EntityType.ENTITY_TAG_KEY, entityTag);
+        stack.getOrCreateNbt().putBoolean(UNINITIALIZED, true);
         return stack;
     }
 
