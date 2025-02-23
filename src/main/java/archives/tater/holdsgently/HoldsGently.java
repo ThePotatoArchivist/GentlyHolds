@@ -6,11 +6,13 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.boss.dragon.EnderDragonPart;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.SpawnEggItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
@@ -20,6 +22,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.stream.StreamSupport;
 
 public class HoldsGently implements ModInitializer {
 	public static final String MOD_ID = "holdsgently";
@@ -38,7 +42,7 @@ public class HoldsGently implements ModInitializer {
 	public static final Item ENTITY_ITEM = Registry.register(
 			Registries.ITEM,
 			id("entity_item"),
-			new EntityItem(new FabricItemSettings())
+			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> EquipmentSlot.HEAD))
 	);
 
 	public static final ItemGroup ENTITIES = Registry.register(
@@ -48,8 +52,9 @@ public class HoldsGently implements ModInitializer {
 					.displayName(Text.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.PIG))
 					.entries((displayContext, entries) -> {
+						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(null)).toList();
 						Registries.ENTITY_TYPE.forEach(entityType -> {
-							if (entityType.isSaveable() && (entityType.isIn(MISC_LIVING) || entityType.getSpawnGroup() != SpawnGroup.MISC))
+							if (entityType.isSaveable() && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING) || entityType.getSpawnGroup() != SpawnGroup.MISC))
 								entries.add(EntityItem.fromType(entityType));
 						});
 					})
