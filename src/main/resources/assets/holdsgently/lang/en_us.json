@@ -1,3 +1,13 @@
 {
-  "itemGroup.holdsgently.entities": "Entities"
+  "itemGroup.holdsgently.entities": "Entities",
+  "holdsgently.midnightconfig.title": "Holds Gently",
+  "holdsgently.midnightconfig.entityRestriction": "Entity Restriction",
+  "holdsgently.midnightconfig.emptyHands": "Hands must be empty",
+  "holdsgently.midnightconfig.canWearHat": "Entities can be equipped in head slot",
+  "holdsgently.midnightconfig.enum.EntityRestriction.ANY": "All Entities",
+  "holdsgently.midnightconfig.enum.EntityRestriction.LIVING": "All Mobs",
+  "holdsgently.midnightconfig.enum.EntityRestriction.NON_BOSS": "All Non-Boss Mobs",
+  "holdsgently.midnightconfig.enum.EntityRestriction.NON_MONSTER": "All Non-Monster Mobs",
+  "holdsgently.midnightconfig.enum.EntityRestriction.ANIMAL": "All Animals",
+  "holdsgently.midnightconfig.enum.EntityRestriction.OWNED": "Owned Pets"
 }

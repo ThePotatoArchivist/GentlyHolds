@@ -1,5 +1,6 @@
 package archives.tater.holdsgently;
 
+import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
@@ -42,7 +43,7 @@ public class HoldsGently implements ModInitializer {
 	public static final Item ENTITY_ITEM = Registry.register(
 			Registries.ITEM,
 			id("entity_item"),
-			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> EquipmentSlot.HEAD))
+			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> HoldsGentlyConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
 	);
 
 	public static final ItemGroup ENTITIES = Registry.register(
@@ -66,11 +67,15 @@ public class HoldsGently implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
+		MidnightConfig.init(MOD_ID, HoldsGentlyConfig.class);
 		UseEntityCallback.EVENT.register((playerEntity, world, hand, entity, entityHitResult) -> {
 			if (!playerEntity.shouldCancelInteraction()) return ActionResult.PASS;
 			if (entity instanceof PlayerEntity) return ActionResult.PASS;
-			if (world.isClient) return ActionResult.SUCCESS;
+			if (HoldsGentlyConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.owner : entity;
+			if (!HoldsGentlyConfig.entityRestriction.canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
+			if (world.isClient) return ActionResult.SUCCESS;
+
 			var stack = EntityItem.from(targetEntity);
 			if (playerEntity.getStackInHand(hand).isEmpty())
 				playerEntity.setStackInHand(hand, stack);
