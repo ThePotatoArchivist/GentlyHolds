@@ -3,6 +3,7 @@ package archives.tater.holdsgently;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
@@ -17,6 +18,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
+import static net.minecraft.util.math.MathHelper.wrapDegrees;
+
 public class EntityItem extends Item {
 
     public static final String[] REMOVE_TAGS = {
@@ -28,6 +31,7 @@ public class EntityItem extends Item {
             "Fire",
             "Air",
             "OnGround",
+            "HurtByTimestamp",
             "Invulnerable",
             "PortalCooldown",
             "TicksFrozen",
@@ -74,7 +78,12 @@ public class EntityItem extends Item {
         } else {
             var entity = EntityType.getEntityFromNbt(nbt.getCompound(EntityType.ENTITY_TAG_KEY), world).orElse(null);
             if (entity == null) return ActionResult.CONSUME;
-            entity.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 0f, 0f);
+            entity.refreshPositionAndAngles(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(world.random.nextFloat() * 360), 0f);
+            if (entity instanceof MobEntity mobEntity) {
+                mobEntity.headYaw = mobEntity.getYaw();
+                mobEntity.bodyYaw = mobEntity.getYaw();
+                mobEntity.playAmbientSound();
+            }
             world.spawnEntity(entity);
         }
 

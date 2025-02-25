@@ -3,15 +3,23 @@ package archives.tater.holdsgently;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalEntityTypeTags;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Tameable;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class HoldsGentlyConfig extends MidnightConfig {
     @Entry
     public static EntityRestriction entityRestriction = EntityRestriction.ANIMAL;
+    @Entry(min = 0)
+    public static float maxWidth = 2;
+    @Entry(min = 0)
+    public static float maxHeight = 2;
     @Entry
     public static boolean emptyHands = true;
     @Entry
@@ -30,13 +38,29 @@ public class HoldsGentlyConfig extends MidnightConfig {
         NON_MONSTER { public boolean canPickup(PlayerEntity player, Entity target) {
             return target.isLiving() && !(target instanceof Monster);
         } },
+        NOT_AGGROED { public boolean canPickup(PlayerEntity player, Entity target) {
+            return target.isLiving() && !target.getType().isIn(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof MobEntity mobEntity) || getTarget(mobEntity) == null);
+        } },
+        NOT_AGGROED_PLAYER { public boolean canPickup(PlayerEntity player, Entity target) {
+            return target.isLiving() && !target.getType().isIn(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof MobEntity mobEntity) || getTarget(mobEntity) != player);
+        } },
         ANIMAL { public boolean canPickup(PlayerEntity player, Entity target) {
             return target instanceof AnimalEntity;
         } },
         OWNED { public boolean canPickup(PlayerEntity player, Entity target) {
-                return target instanceof Tameable tameable && tameable.getOwner() == player;
+            return target instanceof Tameable tameable && tameable.getOwner() == player;
         } };
 
         public abstract boolean canPickup(PlayerEntity player, Entity target);
+
+        private static @Nullable LivingEntity getTarget(MobEntity mobEntity) {
+            var target = mobEntity.getTarget();
+            if (target != null)
+                return target.isAlive() ? target : null;
+            var targetOptional = mobEntity.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET);
+            if (targetOptional == null || targetOptional.isEmpty()) return null;
+            var targetActual = targetOptional.get();
+            return targetActual.isAlive() ? targetActual : null;
+        }
     }
 }

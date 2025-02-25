@@ -62,6 +62,10 @@ public class HoldsGently implements ModInitializer {
 					.build()
 	);
 
+	public static boolean canPickup(PlayerEntity player, Entity target) {
+		return target.getWidth() <= HoldsGentlyConfig.maxWidth && target.getHeight() <= HoldsGentlyConfig.maxHeight && HoldsGentlyConfig.entityRestriction.canPickup(player, target);
+	}
+
 	@Override
 	public void onInitialize() {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -73,7 +77,7 @@ public class HoldsGently implements ModInitializer {
 			if (entity instanceof PlayerEntity) return ActionResult.PASS;
 			if (HoldsGentlyConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.owner : entity;
-			if (!HoldsGentlyConfig.entityRestriction.canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
+			if (!canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
 			if (world.isClient) return ActionResult.SUCCESS;
 
 			var stack = EntityItem.from(targetEntity);
