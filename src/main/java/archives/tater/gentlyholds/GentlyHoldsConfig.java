@@ -1,7 +1,7 @@
 package archives.tater.gentlyholds;
 
 import eu.midnightdust.lib.config.MidnightConfig;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalEntityTypeTags;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Tameable;

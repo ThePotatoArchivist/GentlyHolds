@@ -3,8 +3,8 @@ package archives.tater.gentlyholds;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -14,6 +14,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.SpawnEggItem;
+import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
@@ -21,6 +22,7 @@ import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,12 +40,18 @@ public class GentlyHolds implements ModInitializer {
 		return Identifier.of(MOD_ID, path);
 	}
 
+	public static final ComponentType<Unit> UNINITIALIZED = Registry.register(
+			Registries.DATA_COMPONENT_TYPE,
+			id("uninitialized"),
+			ComponentType.<Unit>builder().codec(Unit.CODEC).packetCodec(PacketCodec.unit(Unit.INSTANCE)).build()
+	);
+
 	public static final TagKey<EntityType<?>> MISC_LIVING = TagKey.of(RegistryKeys.ENTITY_TYPE, id("misc_living"));
 
 	public static final Item ENTITY_ITEM = Registry.register(
 			Registries.ITEM,
 			id("entity_item"),
-			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> GentlyHoldsConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
+			new EntityItem(new Item.Settings().equipmentSlot((livingEntity, stack) -> GentlyHoldsConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
 	);
 
 	public static final ItemGroup ENTITIES = Registry.register(
@@ -53,7 +61,7 @@ public class GentlyHolds implements ModInitializer {
 					.displayName(Text.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.PIG))
 					.entries((displayContext, entries) -> {
-						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(null)).toList();
+						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(ENTITY_ITEM.getDefaultStack())).toList();
 						Registries.ENTITY_TYPE.forEach(entityType -> {
 							if (entityType.isSaveable() && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING) || entityType.getSpawnGroup() != SpawnGroup.MISC))
 								entries.add(EntityItem.fromType(entityType));

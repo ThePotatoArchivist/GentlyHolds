@@ -22,7 +22,7 @@ public class GentlyHoldsClient implements ClientModInitializer {
 			matrices.scale(scale, scale, scale);
 			if (centered)
 				matrices.translate(0, -entity.getHeight() / 2, 0);
-			MinecraftClient.getInstance().getEntityRenderDispatcher().render(entity, 0.0, 0.0, 0.0, 0f, camera == null ? 0 : MinecraftClient.getInstance().getTickDelta(), matrices, vertexConsumers, light);
+			MinecraftClient.getInstance().getEntityRenderDispatcher().render(entity, 0.0, 0.0, 0.0, 0f, camera == null ? 0 : MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(false), matrices, vertexConsumers, light);
 			matrices.pop();
 		});
 	}
