@@ -6,6 +6,7 @@
   "gentlyholds.midnightconfig.maxHeight": "Maximum height",
   "gentlyholds.midnightconfig.emptyHands": "Hands must be empty",
   "gentlyholds.midnightconfig.canWearHat": "Entities can be equipped in head slot",
+  "gentlyholds.midnightconfig.spawnDrop": "Entities are spawned when dropped in the world",
   "gentlyholds.midnightconfig.enum.EntityRestriction.ANY": "All Entities",
   "gentlyholds.midnightconfig.enum.EntityRestriction.LIVING": "All Mobs",
   "gentlyholds.midnightconfig.enum.EntityRestriction.NON_BOSS": "All Non-Boss Mobs",

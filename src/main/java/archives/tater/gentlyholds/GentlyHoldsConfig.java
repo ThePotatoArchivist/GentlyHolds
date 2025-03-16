@@ -12,7 +12,6 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("unused")
 public class GentlyHoldsConfig extends MidnightConfig {
     @Entry
     public static EntityRestriction entityRestriction = EntityRestriction.ANIMAL;
@@ -23,8 +22,11 @@ public class GentlyHoldsConfig extends MidnightConfig {
     @Entry
     public static boolean emptyHands = true;
     @Entry
+    public static boolean spawnDrop = true;
+    @Entry
     public static boolean canWearHat = true;
 
+    @SuppressWarnings("unused")
     public enum EntityRestriction {
         ANY { public boolean canPickup(PlayerEntity player, Entity target) {
             return true;

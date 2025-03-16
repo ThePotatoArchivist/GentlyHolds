@@ -2,6 +2,7 @@ package archives.tater.gentlyholds.mixin;
 
 import archives.tater.gentlyholds.EntityItem;
 import archives.tater.gentlyholds.GentlyHolds;
+import archives.tater.gentlyholds.GentlyHoldsConfig;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
@@ -17,7 +18,7 @@ public abstract class ItemEntityMixin {
 
 	@Inject(method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;DDD)V", at = @At("TAIL"))
 	private void init(World world, double x, double y, double z, ItemStack stack, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
-        if (!stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
+        if (!GentlyHoldsConfig.spawnDrop || !stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
         var entity = EntityItem.entityOf(stack, world);
 		if (entity == null) return;
 		entity.refreshPositionAndAngles(x, y, z, 0f, 0f);
