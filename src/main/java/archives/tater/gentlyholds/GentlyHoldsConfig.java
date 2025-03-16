@@ -6,8 +6,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Tameable;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
+import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +49,7 @@ public class GentlyHoldsConfig extends MidnightConfig {
             return target.isLiving() && !target.getType().isIn(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof MobEntity mobEntity) || getTarget(mobEntity) != player);
         } },
         ANIMAL { public boolean canPickup(PlayerEntity player, Entity target) {
-            return target instanceof AnimalEntity;
+            return target instanceof AnimalEntity || target instanceof WaterCreatureEntity || target instanceof AmbientEntity;
         } },
         OWNED { public boolean canPickup(PlayerEntity player, Entity target) {
             return target instanceof Tameable tameable && tameable.getOwner() == player;
