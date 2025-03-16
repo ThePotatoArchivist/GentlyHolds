@@ -3,15 +3,15 @@
 	"id": "gentlyholds",
 	"version": "${version}",
 	"name": "Gently Holds",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Pick up mobs as items",
 	"authors": [
-		"Me!"
+		"ThePotatoArchivist"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://modrinth.com/project/gently-holds",
+		"sources": "https://github.com/ThePotatoArchivist/GentlyHolds"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/gentlyholds/icon.png",
 	"environment": "*",
 	"entrypoints": {
