@@ -58,6 +58,7 @@ public class GentlyHoldsConfig extends MidnightConfig {
             if (target != null)
                 return target.isAlive() ? target : null;
             var targetOptional = mobEntity.getBrain().getOptionalMemory(MemoryModuleType.ATTACK_TARGET);
+            //noinspection OptionalAssignedToNull
             if (targetOptional == null || targetOptional.isEmpty()) return null;
             var targetActual = targetOptional.get();
             return targetActual.isAlive() ? targetActual : null;

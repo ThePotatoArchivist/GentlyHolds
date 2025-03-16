@@ -13,6 +13,6 @@ public class EntityCache {
     public static Entity get(ItemStack stack, World world) {
         return CACHE
                 .computeIfAbsent(world, _w -> new WeakHashMap<>())
-                .computeIfAbsent(stack, _s -> EntityItem.entityOf(stack, world));
+                .computeIfAbsent(stack, stack1 -> EntityItem.entityOf(stack1, world));
     }
 }
