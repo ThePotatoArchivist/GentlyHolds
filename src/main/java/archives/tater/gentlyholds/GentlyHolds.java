@@ -1,4 +1,4 @@
-package archives.tater.holdsgently;
+package archives.tater.gentlyholds;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.stream.StreamSupport;
 
-public class HoldsGently implements ModInitializer {
-	public static final String MOD_ID = "holdsgently";
+public class GentlyHolds implements ModInitializer {
+	public static final String MOD_ID = "gentlyholds";
 
 	// This logger is used to write text to the console and the log file.
 	// It is considered best practice to use your mod id as the logger's name.
@@ -43,7 +43,7 @@ public class HoldsGently implements ModInitializer {
 	public static final Item ENTITY_ITEM = Registry.register(
 			Registries.ITEM,
 			id("entity_item"),
-			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> HoldsGentlyConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
+			new EntityItem(new FabricItemSettings().equipmentSlot(itemStack -> GentlyHoldsConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
 	);
 
 	public static final ItemGroup ENTITIES = Registry.register(
@@ -63,7 +63,7 @@ public class HoldsGently implements ModInitializer {
 	);
 
 	public static boolean canPickup(PlayerEntity player, Entity target) {
-		return target.getWidth() <= HoldsGentlyConfig.maxWidth && target.getHeight() <= HoldsGentlyConfig.maxHeight && HoldsGentlyConfig.entityRestriction.canPickup(player, target);
+		return target.getWidth() <= GentlyHoldsConfig.maxWidth && target.getHeight() <= GentlyHoldsConfig.maxHeight && GentlyHoldsConfig.entityRestriction.canPickup(player, target);
 	}
 
 	@Override
@@ -71,11 +71,11 @@ public class HoldsGently implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-		MidnightConfig.init(MOD_ID, HoldsGentlyConfig.class);
+		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
 		UseEntityCallback.EVENT.register((playerEntity, world, hand, entity, entityHitResult) -> {
 			if (!playerEntity.shouldCancelInteraction()) return ActionResult.PASS;
 			if (entity instanceof PlayerEntity) return ActionResult.PASS;
-			if (HoldsGentlyConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
+			if (GentlyHoldsConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.owner : entity;
 			if (!canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
 			if (world.isClient) return ActionResult.SUCCESS;

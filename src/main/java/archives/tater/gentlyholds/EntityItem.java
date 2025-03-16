@@ -1,4 +1,4 @@
-package archives.tater.holdsgently;
+package archives.tater.gentlyholds;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -112,7 +112,7 @@ public class EntityItem extends Item {
         for (String key : REMOVE_TAGS) {
             nbt.remove(key);
         }
-        var stack = HoldsGently.ENTITY_ITEM.getDefaultStack();
+        var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
         stack.setSubNbt(EntityType.ENTITY_TAG_KEY, nbt);
         if (entity.hasCustomName())
             stack.setCustomName(entity.getCustomName());
@@ -120,7 +120,7 @@ public class EntityItem extends Item {
     }
 
     public static ItemStack fromType(EntityType<?> entityType) {
-        var stack = HoldsGently.ENTITY_ITEM.getDefaultStack();
+        var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
         var entityTag = new NbtCompound();
         entityTag.putString(Entity.ID_KEY, Registries.ENTITY_TYPE.getId(entityType).toString());
         stack.setSubNbt(EntityType.ENTITY_TAG_KEY, entityTag);

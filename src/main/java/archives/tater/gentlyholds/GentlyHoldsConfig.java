@@ -1,4 +1,4 @@
-package archives.tater.holdsgently;
+package archives.tater.gentlyholds;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalEntityTypeTags;
@@ -13,7 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
-public class HoldsGentlyConfig extends MidnightConfig {
+public class GentlyHoldsConfig extends MidnightConfig {
     @Entry
     public static EntityRestriction entityRestriction = EntityRestriction.ANIMAL;
     @Entry(min = 0)

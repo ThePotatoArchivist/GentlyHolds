@@ -1,4 +1,4 @@
-package archives.tater.holdsgently.mixin.client;
+package archives.tater.gentlyholds.mixin.client;
 
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;

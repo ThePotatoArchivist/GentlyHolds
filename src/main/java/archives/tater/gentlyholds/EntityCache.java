@@ -1,4 +1,4 @@
-package archives.tater.holdsgently;
+package archives.tater.gentlyholds;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;

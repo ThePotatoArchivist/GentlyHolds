@@ -1,15 +1,15 @@
-package archives.tater.holdsgently;
+package archives.tater.gentlyholds;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 
-public class HoldsGentlyClient implements ClientModInitializer {
+public class GentlyHoldsClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
-		BuiltinItemRendererRegistry.INSTANCE.register(HoldsGently.ENTITY_ITEM, (stack, mode, matrices, vertexConsumers, light, overlay) -> {
+		BuiltinItemRendererRegistry.INSTANCE.register(GentlyHolds.ENTITY_ITEM, (stack, mode, matrices, vertexConsumers, light, overlay) -> {
 			var entity = EntityCache.get(stack, MinecraftClient.getInstance().world);
 			if (entity == null) return;
 			var camera = MinecraftClient.getInstance().getCameraEntity();
