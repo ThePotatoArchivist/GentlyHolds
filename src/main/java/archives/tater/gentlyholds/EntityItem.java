@@ -5,6 +5,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.Item;
@@ -13,8 +14,11 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.storage.NbtReadView;
+import net.minecraft.storage.NbtWriteView;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.ErrorReporter;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -27,22 +31,21 @@ public class EntityItem extends Item {
 
     public static final String[] REMOVE_TAGS = {
             Entity.UUID_KEY,
-            "Pos",
-            "Rotation",
-            "Motion",
-            "FallDistance",
-            "Fire",
-            "Air",
-            "OnGround",
-            "HurtByTimestamp",
-            "Invulnerable",
-            "PortalCooldown",
+            Entity.POS_KEY,
+            Entity.ROTATION_KEY,
+            Entity.MOTION_KEY,
+            Entity.FALL_DISTANCE_KEY,
+            Entity.FIRE_KEY,
+            Entity.AIR_KEY,
+            Entity.ON_GROUND_KEY,
+            Entity.INVULNERABLE_KEY,
+            Entity.PORTAL_COOLDOWN_KEY,
             "TicksFrozen",
-            "Glowing",
-            "HurtTime",
-            "SleepingX",
-            "SleepingY",
-            "SleepingZ"
+            "HasVisualFire",
+            Entity.GLOWING_KEY,
+            LivingEntity.HURT_TIME_KEY,
+            LivingEntity.HURT_BY_TIMESTAMP_KEY,
+            LivingEntity.SLEEPING_POS_KEY
     };
 
     private static final MapCodec<EntityType<?>> ENTITY_TYPE_MAP_CODEC = Registries.ENTITY_TYPE.getCodec().fieldOf("id");
@@ -73,14 +76,12 @@ public class EntityItem extends Item {
                     stack,
                     context.getPlayer(),
                     targetPos,
-                    SpawnReason.SPAWN_EGG,
+                    SpawnReason.SPAWN_ITEM_USE,
                     true,
                     pos != targetPos && direction == Direction.UP
             ) == null) return ActionResult.CONSUME;
         } else {
-            var nbt = stack.get(DataComponentTypes.ENTITY_DATA);
-            if (nbt == null) return ActionResult.FAIL;
-            var entity = EntityType.getEntityFromNbt(nbt.copyNbt(), world).orElse(null);
+            var entity = entityOf(stack, world);
             if (entity == null) return ActionResult.CONSUME;
             entity.refreshPositionAndAngles(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(world.random.nextFloat() * 360), 0f);
             if (entity instanceof MobEntity mobEntity) {
@@ -108,13 +109,17 @@ public class EntityItem extends Item {
     }
 
     public static ItemStack from(Entity entity) {
-        var nbt = new NbtCompound();
-        if (!entity.saveSelfNbt(nbt)) return ItemStack.EMPTY;
-        for (String key : REMOVE_TAGS) {
-            nbt.remove(key);
+        NbtWriteView writeView;
+        try (var logging = new ErrorReporter.Logging(entity.getErrorReporterContext(), GentlyHolds.LOGGER)) {
+            writeView = NbtWriteView.create(logging, entity.getRegistryManager());
+            if (!entity.saveSelfData(writeView)) return ItemStack.EMPTY;
         }
+
+        for (String key : REMOVE_TAGS)
+            writeView.remove(key);
+
         var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
-        NbtComponent.set(DataComponentTypes.ENTITY_DATA, stack, nbt);
+        NbtComponent.set(DataComponentTypes.ENTITY_DATA, stack, writeView.getNbt());
         if (entity.hasCustomName())
             stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
         return stack;
@@ -136,6 +141,8 @@ public class EntityItem extends Item {
     }
 
     public static @Nullable Entity entityOf(NbtComponent entityData, World world) {
-        return EntityType.getEntityFromNbt(entityData.copyNbt(), world).orElse(null);
+        try (var logging = new ErrorReporter.Logging(GentlyHolds.LOGGER)) {
+            return EntityType.getEntityFromData(NbtReadView.create(logging, world.getRegistryManager(), entityData.copyNbt()), world, SpawnReason.SPAWN_ITEM_USE).orElse(null);
+        }
     }
 }

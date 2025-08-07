@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "model": {
+      "type": "gentlyholds:entity"
+    },
+    "base": "gentlyholds:item/entity_item"
+  }
+}
