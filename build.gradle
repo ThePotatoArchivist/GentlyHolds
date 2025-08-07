@@ -27,6 +27,12 @@ repositories {
 			includeGroup "maven.modrinth"
 		}
 	}
+	repositories {
+		maven {
+			name = "TerraformersMC"
+			url = "https://maven.terraformersmc.com/"
+		}
+	}
 }
 
 loom {

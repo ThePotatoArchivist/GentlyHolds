@@ -4,6 +4,7 @@ import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -61,9 +62,10 @@ public class GentlyHolds implements ModInitializer {
 					.displayName(Text.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.PIG))
 					.entries((displayContext, entries) -> {
+						if (!GentlyHoldsConfig.itemGroup) return;
 						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(ENTITY_ITEM.getDefaultStack())).toList();
 						Registries.ENTITY_TYPE.forEach(entityType -> {
-							if (entityType.isSaveable() && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING) || entityType.getSpawnGroup() != SpawnGroup.MISC))
+							if (entityType.isSaveable() && entityType.getSpawnGroup() != SpawnGroup.MISC && !entityType.isIn(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING)))
 								entries.add(EntityItem.fromType(entityType));
 						});
 					})

@@ -27,6 +27,8 @@ public class GentlyHoldsConfig extends MidnightConfig {
     public static boolean spawnDrop = true;
     @Entry
     public static boolean canWearHat = true;
+    @Entry
+    public static boolean itemGroup = true;
 
     @SuppressWarnings("unused")
     public enum EntityRestriction {

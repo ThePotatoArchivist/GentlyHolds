@@ -130,8 +130,12 @@ public class EntityItem extends Item {
     }
 
     public static @Nullable Entity entityOf(ItemStack stack, World world) {
-        var entityCompound = stack.get(DataComponentTypes.ENTITY_DATA);
-        if (entityCompound == null) return null;
-        return EntityType.getEntityFromNbt(entityCompound.copyNbt(), world).orElse(null);
+        var entityData = stack.get(DataComponentTypes.ENTITY_DATA);
+        if (entityData == null) return null;
+        return entityOf(entityData, world);
+    }
+
+    public static @Nullable Entity entityOf(NbtComponent entityData, World world) {
+        return EntityType.getEntityFromNbt(entityData.copyNbt(), world).orElse(null);
     }
 }
