@@ -29,6 +29,7 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<NbtComponen
 
     @Override
     public void render(@Nullable NbtComponent data, ItemDisplayContext displayContext, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, boolean glint) {
+        if (data == null) return;
         var entity = EntityCache.get(data, MinecraftClient.getInstance().world);
         if (entity == null) return;
         var camera = MinecraftClient.getInstance().getCameraEntity();
