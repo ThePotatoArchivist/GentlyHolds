@@ -3,14 +3,13 @@ package archives.tater.gentlyholds;
 import com.mojang.serialization.MapCodec;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.class_12075;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.model.LoadedEntityModels;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
+import net.minecraft.client.render.entity.EntityRenderManager;
+import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.RotationAxis;
@@ -19,23 +18,21 @@ import org.joml.Vector3f;
 
 import java.util.Set;
 
-public class EntityItemModelRenderer implements SpecialModelRenderer<NbtComponent> {
+public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
 
-    private final EntityRenderDispatcher entityRenderDispatcher;
+    private final EntityRenderManager entityRenderDispatcher;
 
-    public EntityItemModelRenderer(EntityRenderDispatcher entityRenderDispatcher) {
+    private static final class_12075 UNKNOWN_OBJECT = new class_12075();
+
+    public EntityItemModelRenderer(EntityRenderManager entityRenderDispatcher) {
         this.entityRenderDispatcher = entityRenderDispatcher;
     }
 
     @Override
-    public void render(@Nullable NbtComponent data, ItemDisplayContext displayContext, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, boolean glint) {
+    public void render(@Nullable EntityRenderState data, ItemDisplayContext displayContext, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay, boolean glint) {
         if (data == null) return;
-        var entity = EntityCache.get(data, MinecraftClient.getInstance().world);
-        if (entity == null) return;
-        var camera = MinecraftClient.getInstance().getCameraEntity();
-        if (camera != null)
-            entity.age = camera.age;
-        var rotated = displayContext == ItemDisplayContext.FIXED && entity.getWidth() >= entity.getHeight();
+        data.light = light;
+        var rotated = displayContext == ItemDisplayContext.FIXED && data.width * 1.5f >= data.height;
         var centered = !rotated && displayContext == ItemDisplayContext.FIXED || displayContext == ItemDisplayContext.GUI;
         matrices.push();
         matrices.translate(0.5, rotated || centered ? 0.5 : 0.0, 0.5);
@@ -44,14 +41,14 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<NbtComponen
             matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
         }
         if (displayContext != ItemDisplayContext.HEAD) {
-            var scale = 1 / Math.max(1, Math.max(entity.getWidth(), entity.getHeight()));
+            var scale = 1 / Math.max(1, Math.max(data.width, data.height));
             matrices.scale(scale, scale, scale);
         }
         if (centered)
-            matrices.translate(0, -entity.getHeight() / 2, 0);
+            matrices.translate(0, -data.height / 2, 0);
         if (rotated)
             matrices.translate(0, -1 / 16.0, 0);
-        entityRenderDispatcher.render(entity, 0.0, 0.0, 0.0, camera == null ? 0 : MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(false), matrices, vertexConsumers, light);
+        entityRenderDispatcher.render(data, UNKNOWN_OBJECT, 0.0, 0.0, 0.0, matrices, queue);
         matrices.pop();
     }
 
@@ -61,8 +58,13 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<NbtComponen
     }
 
     @Override
-    public @Nullable NbtComponent getData(ItemStack stack) {
-        return stack.get(DataComponentTypes.ENTITY_DATA);
+    public EntityRenderState getData(ItemStack stack) {
+        var data = EntityCache.get(stack, MinecraftClient.getInstance().world);
+        if (data == null) return null;
+        var camera = MinecraftClient.getInstance().getCameraEntity();
+        if (camera != null)
+            data.age = camera.age + MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(false);
+        return data;
     }
 
     @Environment(EnvType.CLIENT)
@@ -75,7 +77,7 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<NbtComponen
         }
 
         @Override
-        public SpecialModelRenderer<?> bake(LoadedEntityModels entityModels) {
+        public SpecialModelRenderer<?> bake(BakeContext context) {
             return new EntityItemModelRenderer(MinecraftClient.getInstance().getEntityRenderDispatcher());
         }
     }

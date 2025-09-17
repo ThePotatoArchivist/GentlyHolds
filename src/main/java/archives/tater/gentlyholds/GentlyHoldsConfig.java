@@ -1,6 +1,5 @@
 package archives.tater.gentlyholds;
 
-import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -14,20 +13,20 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
-public class GentlyHoldsConfig extends MidnightConfig {
-    @Entry
-    public static EntityRestriction entityRestriction = EntityRestriction.ANIMAL;
-    @Entry(min = 0)
+public class GentlyHoldsConfig /*extends MidnightConfig*/ {
+//    @Entry
+    public static EntityRestriction entityRestriction = EntityRestriction.NON_MONSTER;
+//    @Entry(min = 0)
     public static float maxWidth = 2;
-    @Entry(min = 0)
+//    @Entry(min = 0)
     public static float maxHeight = 2;
-    @Entry
+//    @Entry
     public static boolean emptyHands = true;
-    @Entry
+//    @Entry
     public static boolean spawnDrop = true;
-    @Entry
+//    @Entry
     public static boolean canWearHat = true;
-    @Entry
+//    @Entry
     public static boolean itemGroup = true;
 
     @SuppressWarnings("unused")

@@ -1,6 +1,6 @@
 package archives.tater.gentlyholds;
 
-import eu.midnightdust.lib.config.MidnightConfig;
+//import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
@@ -69,7 +69,7 @@ public class GentlyHolds implements ModInitializer {
 					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
 					.entries((displayContext, entries) -> {
 						if (!GentlyHoldsConfig.itemGroup) return;
-						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(displayContext.lookup(), ENTITY_ITEM.getDefaultStack())).toList();
+						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(spawnEggItem.getDefaultStack())).toList();
 						Registries.ENTITY_TYPE.forEach(entityType -> {
 							if (entityType.isSaveable() && entityType.getSpawnGroup() != SpawnGroup.MISC && !entityType.isIn(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING)))
 								entries.add(EntityItem.fromType(entityType));
@@ -87,7 +87,7 @@ public class GentlyHolds implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
+//		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
 
 		if (GentlyHoldsConfig.canWearHat)
 			DefaultItemComponentEvents.MODIFY.register(context -> {

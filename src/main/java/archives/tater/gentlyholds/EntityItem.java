@@ -1,20 +1,13 @@
 package archives.tater.gentlyholds;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.*;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.NbtReadView;
 import net.minecraft.storage.NbtWriteView;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -48,8 +41,6 @@ public class EntityItem extends Item {
             LivingEntity.SLEEPING_POS_KEY
     };
 
-    private static final MapCodec<EntityType<?>> ENTITY_TYPE_MAP_CODEC = Registries.ENTITY_TYPE.getCodec().fieldOf("id");
-
     public EntityItem(Settings settings) {
         super(settings.maxCount(1));
     }
@@ -66,12 +57,12 @@ public class EntityItem extends Item {
 
         var targetPos = state.getCollisionShape(world, pos).isEmpty() ? pos : pos.offset(direction);
 
-        var entityType = getEntityType(stack.get(DataComponentTypes.ENTITY_DATA));
+        var data = stack.get(DataComponentTypes.ENTITY_DATA);
 
-        if (entityType == null) return ActionResult.CONSUME;
+        if (data == null) return ActionResult.CONSUME;
 
         if (stack.contains(GentlyHolds.UNINITIALIZED)) {
-            if (entityType.spawnFromItemStack(
+            if (data.getType().spawnFromItemStack(
                     serverWorld,
                     stack,
                     context.getPlayer(),
@@ -100,12 +91,8 @@ public class EntityItem extends Item {
 
     @Override
     public Text getName(ItemStack stack) {
-        var type = getEntityType(stack.get(DataComponentTypes.ENTITY_DATA));
-        return type == null ? super.getName(stack) : type.getName();
-    }
-
-    public static @Nullable EntityType<?> getEntityType(@Nullable NbtComponent nbt) {
-        return nbt == null || nbt.isEmpty() ? null : nbt.get(ENTITY_TYPE_MAP_CODEC).result().orElse(null);
+        var data = stack.get(DataComponentTypes.ENTITY_DATA);
+        return data == null ? super.getName(stack) : data.getType().getName();
     }
 
     public static ItemStack from(Entity entity) {
@@ -119,7 +106,7 @@ public class EntityItem extends Item {
             writeView.remove(key);
 
         var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
-        NbtComponent.set(DataComponentTypes.ENTITY_DATA, stack, writeView.getNbt());
+        stack.set(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(entity.getType(), writeView.getNbt()));
         if (entity.hasCustomName())
             stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
         return stack;
@@ -127,9 +114,7 @@ public class EntityItem extends Item {
 
     public static ItemStack fromType(EntityType<?> entityType) {
         var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
-        var entityTag = new NbtCompound();
-        entityTag.putString(Entity.ID_KEY, Registries.ENTITY_TYPE.getId(entityType).toString());
-        NbtComponent.set(DataComponentTypes.ENTITY_DATA, stack, entityTag);
+        stack.set(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(entityType, new NbtCompound()));
         stack.set(GentlyHolds.UNINITIALIZED, Unit.INSTANCE);
         return stack;
     }
@@ -140,9 +125,10 @@ public class EntityItem extends Item {
         return entityOf(entityData, world);
     }
 
-    public static @Nullable Entity entityOf(NbtComponent entityData, World world) {
-        try (var logging = new ErrorReporter.Logging(GentlyHolds.LOGGER)) {
-            return EntityType.getEntityFromData(NbtReadView.create(logging, world.getRegistryManager(), entityData.copyNbt()), world, SpawnReason.SPAWN_ITEM_USE).orElse(null);
-        }
+    public static @Nullable Entity entityOf(TypedEntityData<EntityType<?>> entityData, World world) {
+        var entity = entityData.getType().create(world, SpawnReason.SPAWN_ITEM_USE);
+        if (entity == null) return null;
+        entityData.applyToEntity(entity);
+        return entity;
     }
 }
