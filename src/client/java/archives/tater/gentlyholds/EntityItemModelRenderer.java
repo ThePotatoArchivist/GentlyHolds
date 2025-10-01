@@ -1,18 +1,20 @@
 package archives.tater.gentlyholds;
 
-import com.mojang.serialization.MapCodec;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.class_12075;
+
+import com.mojang.serialization.MapCodec;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.EntityRenderManager;
 import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.RotationAxis;
+
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -22,14 +24,14 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
 
     private final EntityRenderManager entityRenderDispatcher;
 
-    private static final class_12075 UNKNOWN_OBJECT = new class_12075();
+    private static final CameraRenderState UNKNOWN_OBJECT = new CameraRenderState();
 
     public EntityItemModelRenderer(EntityRenderManager entityRenderDispatcher) {
         this.entityRenderDispatcher = entityRenderDispatcher;
     }
 
     @Override
-    public void render(@Nullable EntityRenderState data, ItemDisplayContext displayContext, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay, boolean glint) {
+    public void render(@Nullable EntityRenderState data, ItemDisplayContext displayContext, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int i) {
         if (data == null) return;
         data.light = light;
         var rotated = displayContext == ItemDisplayContext.FIXED && data.width * 1.5f >= data.height;
