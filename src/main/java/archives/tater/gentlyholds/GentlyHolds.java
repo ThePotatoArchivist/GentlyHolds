@@ -1,11 +1,13 @@
 package archives.tater.gentlyholds;
 
 //import eu.midnightdust.lib.config.MidnightConfig;
+
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
+
 import net.minecraft.component.ComponentType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.EquippableComponent;
@@ -30,6 +32,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Unit;
+
+import eu.midnightdust.lib.config.MidnightConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +91,7 @@ public class GentlyHolds implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-//		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
+		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
 
 		if (GentlyHoldsConfig.canWearHat)
 			DefaultItemComponentEvents.MODIFY.register(context -> {

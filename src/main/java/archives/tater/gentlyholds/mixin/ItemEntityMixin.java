@@ -36,16 +36,16 @@ public abstract class ItemEntityMixin extends Entity {
             cancellable = true
     )
     private void spawnEntity(CallbackInfo ci) {
-        if (getWorld().isClient || itemAge != 0) return;
+        if (getEntityWorld().isClient() || itemAge != 0) return;
         var stack = getStack();
         if (!GentlyHoldsConfig.spawnDrop || !stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
-        var entity = EntityItem.entityOf(stack, getWorld());
+        var entity = EntityItem.entityOf(stack, getEntityWorld());
         if (entity == null) return;
         var velocity = getVelocity();
         var yaw = atan2(velocity.y, velocity.x);
         entity.refreshPositionAndAngles(getX(), getY(), getZ(), Double.isNaN(yaw) ? 0f : (float) yaw, 0f);
         entity.setVelocity(velocity);
-        getWorld().spawnEntity(entity);
+        getEntityWorld().spawnEntity(entity);
         discard();
         ci.cancel();
     }
