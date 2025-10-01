@@ -3,27 +3,50 @@ package archives.tater.gentlyholds.mixin;
 import archives.tater.gentlyholds.EntityItem;
 import archives.tater.gentlyholds.GentlyHolds;
 import archives.tater.gentlyholds.GentlyHoldsConfig;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ItemEntity.class)
-public abstract class ItemEntityMixin {
-	@Shadow public abstract void setStack(ItemStack stack);
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
-	@Inject(method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;DDD)V", at = @At("TAIL"))
-	private void init(World world, double x, double y, double z, ItemStack stack, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
+import static net.minecraft.util.math.MathHelper.atan2;
+
+@Mixin(ItemEntity.class)
+public abstract class ItemEntityMixin extends Entity {
+    public ItemEntityMixin(EntityType<?> type, World world) {
+        super(type, world);
+    }
+
+    @Shadow
+    public abstract ItemStack getStack();
+
+    @Shadow
+    private int itemAge;
+
+    @Inject(
+            method = "tick",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void spawnEntity(CallbackInfo ci) {
+        if (getWorld().isClient || itemAge != 0) return;
+        var stack = getStack();
         if (!GentlyHoldsConfig.spawnDrop || !stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
-        var entity = EntityItem.entityOf(stack, world);
-		if (entity == null) return;
-		entity.refreshPositionAndAngles(x, y, z, 0f, 0f);
-		entity.setVelocity(8 * velocityX, velocityY, 8 * velocityZ);
-        world.spawnEntity(entity);
-        setStack(ItemStack.EMPTY);
+        var entity = EntityItem.entityOf(stack, getWorld());
+        if (entity == null) return;
+        var velocity = getVelocity();
+        var yaw = atan2(velocity.y, velocity.x);
+        entity.refreshPositionAndAngles(getX(), getY(), getZ(), Double.isNaN(yaw) ? 0f : (float) yaw, 0f);
+        entity.setVelocity(velocity);
+        getWorld().spawnEntity(entity);
+        discard();
+        ci.cancel();
     }
 }
