@@ -16,9 +16,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.RotationAxis;
 
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.Set;
+import java.util.function.Consumer;
 
 public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
 
@@ -55,7 +55,7 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
     }
 
     @Override
-    public void collectVertices(Set<Vector3f> vertices) {
+    public void collectVertices(Consumer<Vector3fc> vertices) {
 
     }
 
