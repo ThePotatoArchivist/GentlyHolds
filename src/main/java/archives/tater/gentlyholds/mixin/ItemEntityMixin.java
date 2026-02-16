@@ -36,7 +36,7 @@ public abstract class ItemEntityMixin extends Entity {
     private void spawnEntity(CallbackInfo ci) {
         if (level().isClientSide() || age != 0) return;
         var stack = getItem();
-        if (!GentlyHoldsConfig.spawnDrop || !stack.is(GentlyHolds.ENTITY_ITEM)) return;
+        if (!GentlyHolds.CONFIG.spawnDrop || !stack.is(GentlyHolds.ENTITY_ITEM)) return;
         var entity = EntityItem.entityOf(stack, level());
         if (entity == null) return;
         var velocity = getDeltaMovement();

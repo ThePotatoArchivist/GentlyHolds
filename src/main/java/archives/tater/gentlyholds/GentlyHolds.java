@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
+import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
@@ -29,7 +31,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.equipment.Equippable;
-import eu.midnightdust.lib.config.MidnightConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,8 @@ public class GentlyHolds implements ModInitializer {
 	public static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
+
+	public static final GentlyHoldsConfig CONFIG = GentlyHoldsConfig.createToml(FabricLoader.getInstance().getConfigDir(), "", MOD_ID, GentlyHoldsConfig.class);
 
 	public static final DataComponentType<Unit> UNINITIALIZED = Registry.register(
 			BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -68,7 +71,7 @@ public class GentlyHolds implements ModInitializer {
 					.title(Component.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
 					.displayItems((displayContext, entries) -> {
-						if (!GentlyHoldsConfig.itemGroup) return;
+						if (!GentlyHolds.CONFIG.creativeTab) return;
 						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.eggs().spliterator(), false).map(spawnEggItem -> spawnEggItem.getType(spawnEggItem.getDefaultInstance())).toList();
 						BuiltInRegistries.ENTITY_TYPE.forEach(entityType -> {
 							if (entityType.canSerialize() && entityType.getCategory() != MobCategory.MISC && !entityType.is(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.is(MISC_LIVING)))
@@ -79,7 +82,7 @@ public class GentlyHolds implements ModInitializer {
 	);
 
 	public static boolean canPickup(Player player, Entity target) {
-		return target.getBbWidth() <= GentlyHoldsConfig.maxWidth && target.getBbHeight() <= GentlyHoldsConfig.maxHeight && GentlyHoldsConfig.entityRestriction.canPickup(player, target);
+		return target.getBbWidth() <= GentlyHolds.CONFIG.maxWidth && target.getBbHeight() <= GentlyHolds.CONFIG.maxHeight && GentlyHolds.CONFIG.entityRestriction.canPickup(player, target);
 	}
 
 	@Override
@@ -87,9 +90,8 @@ public class GentlyHolds implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
 
-		if (GentlyHoldsConfig.canWearHat)
+		if (GentlyHolds.CONFIG.canWearHat)
 			DefaultItemComponentEvents.MODIFY.register(context -> {
 				context.modify(ENTITY_ITEM, builder -> builder.set(
 						DataComponents.EQUIPPABLE,
@@ -100,7 +102,7 @@ public class GentlyHolds implements ModInitializer {
 		UseEntityCallback.EVENT.register((playerEntity, level, hand, entity, entityHitResult) -> {
 			if (!playerEntity.isSecondaryUseActive()) return InteractionResult.PASS;
 			if (entity instanceof Player) return InteractionResult.PASS;
-			if (GentlyHoldsConfig.emptyHands && (!playerEntity.getMainHandItem().isEmpty() || !playerEntity.getOffhandItem().isEmpty())) return InteractionResult.PASS;
+			if (GentlyHolds.CONFIG.emptyHands && (!playerEntity.getMainHandItem().isEmpty() || !playerEntity.getOffhandItem().isEmpty())) return InteractionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.parentMob : entity;
 			if (!canPickup(playerEntity, targetEntity)) return InteractionResult.PASS;
 			if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
