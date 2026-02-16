@@ -11,12 +11,13 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 import folk.sisby.kaleido.api.WrappedConfig;
-import folk.sisby.kaleido.lib.quiltconfig.api.annotations.Comment;
-import folk.sisby.kaleido.lib.quiltconfig.api.annotations.DisplayNameConvention;
-import folk.sisby.kaleido.lib.quiltconfig.api.annotations.FloatRange;
-import folk.sisby.kaleido.lib.quiltconfig.api.annotations.SerializedNameConvention;
+import folk.sisby.kaleido.lib.quiltconfig.api.annotations.*;
+import folk.sisby.kaleido.lib.quiltconfig.api.metadata.ChangeWarning.Type;
 import folk.sisby.kaleido.lib.quiltconfig.api.metadata.NamingSchemes;
+import folk.sisby.kaleido.lib.quiltconfig.api.values.ValueList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class GentlyHoldsConfig extends WrappedConfig {
     @DisplayNameConvention(NamingSchemes.TITLE_CASE)
@@ -47,13 +48,28 @@ public class GentlyHoldsConfig extends WrappedConfig {
 
     @DisplayNameConvention(NamingSchemes.TITLE_CASE)
     @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
-    @Comment("Entities can be equipped in head slot")
+    @ChangeWarning(Type.RequiresRestart)
+    @Comment("Entities can be equipped in head slot\nRequires restart")
     public boolean canWearHat = true;
 
     @DisplayNameConvention(NamingSchemes.TITLE_CASE)
     @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
-    @Comment("Add creative mode tab")
+    @ChangeWarning(Type.RequiresRestart)
+    @Comment("Add creative mode tab\nRequires reloading world")
     public boolean creativeTab = true;
+
+    @DisplayNameConvention(NamingSchemes.TITLE_CASE)
+    @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
+    @ChangeWarning(Type.RequiresRestart)
+    @Comment("Entities that can always be picked up\nRequires restart")
+    public List<String> entityWhitelist = ValueList.create("minecraft:creeper");
+
+    @DisplayNameConvention(NamingSchemes.TITLE_CASE)
+    @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
+    @ChangeWarning(Type.RequiresRestart)
+    @Comment("Entities that can can never be picked up\nRequires restart")
+    public List<String> entityBlacklist = ValueList.create("minecraft:creeper");
+
 
     @SuppressWarnings("unused")
     public enum EntityRestriction {
