@@ -1,7 +1,5 @@
 package archives.tater.gentlyholds;
 
-//import eu.midnightdust.lib.config.MidnightConfig;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;

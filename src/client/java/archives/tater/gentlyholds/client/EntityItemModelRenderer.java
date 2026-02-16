@@ -20,6 +20,7 @@ import org.joml.Vector3fc;
 
 import java.util.function.Consumer;
 
+import static java.lang.Math.max;
 import static java.util.Objects.requireNonNull;
 
 public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
@@ -45,7 +46,7 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
             poseStack.mulPose(Axis.YP.rotationDegrees(180));
         }
         if (displayContext != ItemDisplayContext.HEAD) {
-            var scale = 1 / Math.max(1, Math.max(data.boundingBoxWidth, data.boundingBoxHeight));
+            var scale = 1 / max(1, max(data.boundingBoxWidth, data.boundingBoxHeight));
             poseStack.scale(scale, scale, scale);
         }
         if (centered)
