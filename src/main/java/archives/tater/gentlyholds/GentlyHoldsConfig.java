@@ -18,7 +18,7 @@ import folk.sisby.kaleido.lib.quiltconfig.api.annotations.*;
 import folk.sisby.kaleido.lib.quiltconfig.api.metadata.ChangeWarning.Type;
 import folk.sisby.kaleido.lib.quiltconfig.api.metadata.NamingSchemes;
 import folk.sisby.kaleido.lib.quiltconfig.api.values.ValueList;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
