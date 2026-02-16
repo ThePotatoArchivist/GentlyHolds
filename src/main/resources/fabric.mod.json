@@ -8,7 +8,7 @@
 		"ThePotatoArchivist"
 	],
 	"contact": {
-		"homepage": "https://modrinth.com/project/gently-holds",
+		"homepage": "https://modrinth.com/mod/gently-holds",
 		"sources": "https://github.com/ThePotatoArchivist/GentlyHolds"
 	},
 	"license": "MIT",
@@ -30,8 +30,8 @@
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.16.10",
-		"minecraft": "~1.21.9",
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
 		"java": ">=21",
 		"fabric-api": "*"
 	},
