@@ -1,4 +1,6 @@
-package archives.tater.gentlyholds;
+package archives.tater.gentlyholds.client;
+
+import archives.tater.gentlyholds.EntityItem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -10,13 +12,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.Level;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public class EntityCache {
     private static final Map<Level, Map<TypedEntityData<EntityType<?>>, EntityRenderState>> CACHE = new WeakHashMap<>();
 
-    public static EntityRenderState get(ItemStack stack, Level level) {
+    public static @Nullable EntityRenderState get(ItemStack stack, Level level) {
         var entityData = stack.get(DataComponents.ENTITY_DATA);
         if (entityData == null) return null;
         return get(entityData, level);

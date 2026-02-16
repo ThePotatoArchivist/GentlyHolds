@@ -1,4 +1,6 @@
-package archives.tater.gentlyholds;
+package archives.tater.gentlyholds.client;
+
+import archives.tater.gentlyholds.GentlyHolds;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.renderer.special.SpecialModelRenderers;

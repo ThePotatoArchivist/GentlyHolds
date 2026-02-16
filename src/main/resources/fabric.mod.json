@@ -19,7 +19,7 @@
 			"archives.tater.gentlyholds.GentlyHolds"
 		],
 		"client": [
-			"archives.tater.gentlyholds.GentlyHoldsClient"
+          "archives.tater.gentlyholds.client.GentlyHoldsClient"
 		]
 	},
 	"mixins": [

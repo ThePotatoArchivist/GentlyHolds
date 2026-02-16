@@ -1,4 +1,4 @@
-package archives.tater.gentlyholds;
+package archives.tater.gentlyholds.client;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
 
@@ -60,8 +62,8 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
     }
 
     @Override
-    public EntityRenderState extractArgument(ItemStack stack) {
-        var data = EntityCache.get(stack, Minecraft.getInstance().level);
+    public @Nullable EntityRenderState extractArgument(ItemStack stack) {
+        var data = EntityCache.get(stack, requireNonNull(Minecraft.getInstance().level));
         if (data == null) return null;
         var camera = Minecraft.getInstance().getCameraEntity();
         if (camera != null)
