@@ -7,32 +7,30 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
-
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.EquippableComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.boss.dragon.EnderDragonPart;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.Items;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Unit;
-
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.equipment.Equippable;
 import eu.midnightdust.lib.config.MidnightConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,42 +46,42 @@ public class GentlyHolds implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	public static Identifier id(String path) {
-		return Identifier.of(MOD_ID, path);
+		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
 
-	public static final ComponentType<Unit> UNINITIALIZED = Registry.register(
-			Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<Unit> UNINITIALIZED = Registry.register(
+			BuiltInRegistries.DATA_COMPONENT_TYPE,
 			id("uninitialized"),
-			ComponentType.<Unit>builder().codec(Unit.CODEC).packetCodec(PacketCodec.unit(Unit.INSTANCE)).build()
+			DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).build()
 	);
 
-	public static final TagKey<EntityType<?>> MISC_LIVING = TagKey.of(RegistryKeys.ENTITY_TYPE, id("misc_living"));
+	public static final TagKey<EntityType<?>> MISC_LIVING = TagKey.create(Registries.ENTITY_TYPE, id("misc_living"));
 
-	public static final Item ENTITY_ITEM = Items.register(
-			RegistryKey.of(RegistryKeys.ITEM, id("entity_item")),
+	public static final Item ENTITY_ITEM = Items.registerItem(
+			ResourceKey.create(Registries.ITEM, id("entity_item")),
 			EntityItem::new,
-			new Item.Settings()
+			new Item.Properties()
 	);
 
-	public static final ItemGroup ENTITIES = Registry.register(
-			Registries.ITEM_GROUP,
+	public static final CreativeModeTab ENTITIES = Registry.register(
+			BuiltInRegistries.CREATIVE_MODE_TAB,
 			id("entities"),
 			FabricItemGroup.builder()
-					.displayName(Text.translatable("itemGroup." + MOD_ID + ".entities"))
+					.title(Component.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
-					.entries((displayContext, entries) -> {
+					.displayItems((displayContext, entries) -> {
 						if (!GentlyHoldsConfig.itemGroup) return;
-						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(spawnEggItem.getDefaultStack())).toList();
-						Registries.ENTITY_TYPE.forEach(entityType -> {
-							if (entityType.isSaveable() && entityType.getSpawnGroup() != SpawnGroup.MISC && !entityType.isIn(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING)))
-								entries.add(EntityItem.fromType(entityType));
+						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.eggs().spliterator(), false).map(spawnEggItem -> spawnEggItem.getType(spawnEggItem.getDefaultInstance())).toList();
+						BuiltInRegistries.ENTITY_TYPE.forEach(entityType -> {
+							if (entityType.canSerialize() && entityType.getCategory() != MobCategory.MISC && !entityType.is(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.is(MISC_LIVING)))
+								entries.accept(EntityItem.fromType(entityType));
 						});
 					})
 					.build()
 	);
 
-	public static boolean canPickup(PlayerEntity player, Entity target) {
-		return target.getWidth() <= GentlyHoldsConfig.maxWidth && target.getHeight() <= GentlyHoldsConfig.maxHeight && GentlyHoldsConfig.entityRestriction.canPickup(player, target);
+	public static boolean canPickup(Player player, Entity target) {
+		return target.getBbWidth() <= GentlyHoldsConfig.maxWidth && target.getBbHeight() <= GentlyHoldsConfig.maxHeight && GentlyHoldsConfig.entityRestriction.canPickup(player, target);
 	}
 
 	@Override
@@ -95,27 +93,27 @@ public class GentlyHolds implements ModInitializer {
 
 		if (GentlyHoldsConfig.canWearHat)
 			DefaultItemComponentEvents.MODIFY.register(context -> {
-				context.modify(ENTITY_ITEM, builder -> builder.add(
-						DataComponentTypes.EQUIPPABLE,
-						EquippableComponent.builder(EquipmentSlot.HEAD).swappable(false).build()
+				context.modify(ENTITY_ITEM, builder -> builder.set(
+						DataComponents.EQUIPPABLE,
+						Equippable.builder(EquipmentSlot.HEAD).setSwappable(false).build()
 				));
 			});
 
-		UseEntityCallback.EVENT.register((playerEntity, world, hand, entity, entityHitResult) -> {
-			if (!playerEntity.shouldCancelInteraction()) return ActionResult.PASS;
-			if (entity instanceof PlayerEntity) return ActionResult.PASS;
-			if (GentlyHoldsConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
-			var targetEntity = entity instanceof EnderDragonPart part ? part.owner : entity;
-			if (!canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
-			if (!(world instanceof ServerWorld serverWorld)) return ActionResult.SUCCESS;
+		UseEntityCallback.EVENT.register((playerEntity, level, hand, entity, entityHitResult) -> {
+			if (!playerEntity.isSecondaryUseActive()) return InteractionResult.PASS;
+			if (entity instanceof Player) return InteractionResult.PASS;
+			if (GentlyHoldsConfig.emptyHands && (!playerEntity.getMainHandItem().isEmpty() || !playerEntity.getOffhandItem().isEmpty())) return InteractionResult.PASS;
+			var targetEntity = entity instanceof EnderDragonPart part ? part.parentMob : entity;
+			if (!canPickup(playerEntity, targetEntity)) return InteractionResult.PASS;
+			if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
 
 			var stack = EntityItem.from(targetEntity);
-			if (playerEntity.getStackInHand(hand).isEmpty())
-				playerEntity.setStackInHand(hand, stack);
-			else if (!playerEntity.giveItemStack(stack))
-				playerEntity.dropStack(serverWorld, stack);
+			if (playerEntity.getItemInHand(hand).isEmpty())
+				playerEntity.setItemInHand(hand, stack);
+			else if (!playerEntity.addItem(stack))
+				playerEntity.spawnAtLocation(serverLevel, stack);
 			targetEntity.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		});
 	}
 }

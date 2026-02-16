@@ -1,134 +1,135 @@
 package archives.tater.gentlyholds;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.NbtWriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ErrorReporter;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.Unit;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.storage.TagValueOutput;
+
 import org.jetbrains.annotations.Nullable;
 
-import static net.minecraft.util.math.MathHelper.wrapDegrees;
+import static net.minecraft.util.Mth.wrapDegrees;
 
 public class EntityItem extends Item {
 
     public static final String[] REMOVE_TAGS = {
-            Entity.UUID_KEY,
-            Entity.POS_KEY,
-            Entity.ROTATION_KEY,
-            Entity.MOTION_KEY,
-            Entity.FALL_DISTANCE_KEY,
-            Entity.FIRE_KEY,
-            Entity.AIR_KEY,
-            Entity.ON_GROUND_KEY,
-            Entity.INVULNERABLE_KEY,
-            Entity.PORTAL_COOLDOWN_KEY,
+            Entity.TAG_UUID,
+            Entity.TAG_POS,
+            Entity.TAG_ROTATION,
+            Entity.TAG_MOTION,
+            Entity.TAG_FALL_DISTANCE,
+            Entity.TAG_FIRE,
+            Entity.TAG_AIR,
+            Entity.TAG_ON_GROUND,
+            Entity.TAG_INVULNERABLE,
+            Entity.TAG_PORTAL_COOLDOWN,
             "TicksFrozen",
             "HasVisualFire",
-            Entity.GLOWING_KEY,
-            LivingEntity.HURT_TIME_KEY,
-            LivingEntity.HURT_BY_TIMESTAMP_KEY,
-            LivingEntity.SLEEPING_POS_KEY
+            Entity.TAG_GLOWING,
+            LivingEntity.TAG_HURT_TIME,
+            LivingEntity.TAG_HURT_BY_TIMESTAMP,
+            LivingEntity.TAG_SLEEPING_POS
     };
 
-    public EntityItem(Settings settings) {
-        super(settings.maxCount(1));
+    public EntityItem(Properties settings) {
+        super(settings.stacksTo(1));
     }
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        var world = context.getWorld();
-        if (!(world instanceof ServerWorld serverWorld)) return ActionResult.SUCCESS;
+    public InteractionResult useOn(UseOnContext context) {
+        var level = context.getLevel();
+        if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
 
-        var stack = context.getStack();
-        var pos = context.getBlockPos();
-        var direction = context.getSide();
-        var state = world.getBlockState(pos);
+        var stack = context.getItemInHand();
+        var pos = context.getClickedPos();
+        var direction = context.getClickedFace();
+        var state = level.getBlockState(pos);
 
-        var targetPos = state.getCollisionShape(world, pos).isEmpty() ? pos : pos.offset(direction);
+        var targetPos = state.getCollisionShape(level, pos).isEmpty() ? pos : pos.relative(direction);
 
-        var data = stack.get(DataComponentTypes.ENTITY_DATA);
+        var data = stack.get(DataComponents.ENTITY_DATA);
 
-        if (data == null) return ActionResult.CONSUME;
+        if (data == null) return InteractionResult.CONSUME;
 
-        if (stack.contains(GentlyHolds.UNINITIALIZED)) {
-            if (data.getType().spawnFromItemStack(
-                    serverWorld,
+        if (stack.has(GentlyHolds.UNINITIALIZED)) {
+            if (data.type().spawn(
+                    serverLevel,
                     stack,
                     context.getPlayer(),
                     targetPos,
-                    SpawnReason.SPAWN_ITEM_USE,
+                    EntitySpawnReason.SPAWN_ITEM_USE,
                     true,
                     pos != targetPos && direction == Direction.UP
-            ) == null) return ActionResult.CONSUME;
+            ) == null) return InteractionResult.CONSUME;
         } else {
-            var entity = entityOf(stack, world);
-            if (entity == null) return ActionResult.CONSUME;
-            entity.refreshPositionAndAngles(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(world.random.nextFloat() * 360), 0f);
-            if (entity instanceof MobEntity mobEntity) {
-                mobEntity.headYaw = mobEntity.getYaw();
-                mobEntity.bodyYaw = mobEntity.getYaw();
-                mobEntity.playAmbientSound();
+            var entity = entityOf(stack, level);
+            if (entity == null) return InteractionResult.CONSUME;
+            entity.snapTo(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(level.random.nextFloat() * 360), 0f);
+            if (entity instanceof Mob mob) {
+                mob.yHeadRot = mob.getYRot();
+                mob.yBodyRot = mob.getYRot();
+                mob.playAmbientSound();
             }
-            world.spawnEntity(entity);
+            level.addFreshEntity(entity);
         }
 
-        stack.decrement(1);
-        world.emitGameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, pos);
+        stack.shrink(1);
+        level.gameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, pos);
 
-        return ActionResult.CONSUME;
+        return InteractionResult.CONSUME;
     }
 
     @Override
-    public Text getName(ItemStack stack) {
-        var data = stack.get(DataComponentTypes.ENTITY_DATA);
-        return data == null ? super.getName(stack) : data.getType().getName();
+    public Component getName(ItemStack stack) {
+        var data = stack.get(DataComponents.ENTITY_DATA);
+        return data == null ? super.getName(stack) : data.type().getDescription();
     }
 
     public static ItemStack from(Entity entity) {
-        NbtWriteView writeView;
-        try (var logging = new ErrorReporter.Logging(entity.getErrorReporterContext(), GentlyHolds.LOGGER)) {
-            writeView = NbtWriteView.create(logging, entity.getRegistryManager());
-            if (!entity.saveSelfData(writeView)) return ItemStack.EMPTY;
+        TagValueOutput writeView;
+        try (var logging = new ProblemReporter.ScopedCollector(entity.problemPath(), GentlyHolds.LOGGER)) {
+            writeView = TagValueOutput.createWithContext(logging, entity.registryAccess());
+            if (!entity.saveAsPassenger(writeView)) return ItemStack.EMPTY;
         }
 
         for (String key : REMOVE_TAGS)
-            writeView.remove(key);
+            writeView.discard(key);
 
-        var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
-        stack.set(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(entity.getType(), writeView.getNbt()));
+        var stack = GentlyHolds.ENTITY_ITEM.getDefaultInstance();
+        stack.set(DataComponents.ENTITY_DATA, TypedEntityData.of(entity.getType(), writeView.buildResult()));
         if (entity.hasCustomName())
-            stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
+            stack.set(DataComponents.CUSTOM_NAME, entity.getCustomName());
         return stack;
     }
 
     public static ItemStack fromType(EntityType<?> entityType) {
-        var stack = GentlyHolds.ENTITY_ITEM.getDefaultStack();
-        stack.set(DataComponentTypes.ENTITY_DATA, TypedEntityData.create(entityType, new NbtCompound()));
+        var stack = GentlyHolds.ENTITY_ITEM.getDefaultInstance();
+        stack.set(DataComponents.ENTITY_DATA, TypedEntityData.of(entityType, new CompoundTag()));
         stack.set(GentlyHolds.UNINITIALIZED, Unit.INSTANCE);
         return stack;
     }
 
-    public static @Nullable Entity entityOf(ItemStack stack, World world) {
-        var entityData = stack.get(DataComponentTypes.ENTITY_DATA);
+    public static @Nullable Entity entityOf(ItemStack stack, Level level) {
+        var entityData = stack.get(DataComponents.ENTITY_DATA);
         if (entityData == null) return null;
-        return entityOf(entityData, world);
+        return entityOf(entityData, level);
     }
 
-    public static @Nullable Entity entityOf(TypedEntityData<EntityType<?>> entityData, World world) {
-        var entity = entityData.getType().create(world, SpawnReason.SPAWN_ITEM_USE);
+    public static @Nullable Entity entityOf(TypedEntityData<EntityType<?>> entityData, Level level) {
+        var entity = entityData.type().create(level, EntitySpawnReason.SPAWN_ITEM_USE);
         if (entity == null) return null;
-        entityData.applyToEntity(entity);
+        entityData.loadInto(entity);
         return entity;
     }
 }

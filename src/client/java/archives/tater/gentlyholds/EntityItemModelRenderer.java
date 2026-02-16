@@ -3,69 +3,69 @@ package archives.tater.gentlyholds;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.entity.EntityRenderManager;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.Set;
+import java.util.function.Consumer;
 
 public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
 
-    private final EntityRenderManager entityRenderDispatcher;
+    private final EntityRenderDispatcher entityRenderDispatcher;
 
     private static final CameraRenderState UNKNOWN_OBJECT = new CameraRenderState();
 
-    public EntityItemModelRenderer(EntityRenderManager entityRenderDispatcher) {
+    public EntityItemModelRenderer(EntityRenderDispatcher entityRenderDispatcher) {
         this.entityRenderDispatcher = entityRenderDispatcher;
     }
 
     @Override
-    public void render(@Nullable EntityRenderState data, ItemDisplayContext displayContext, MatrixStack matrices, OrderedRenderCommandQueue queue, int light, int overlay, boolean glint, int i) {
+    public void submit(@Nullable EntityRenderState data, ItemDisplayContext displayContext, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int light, int overlay, boolean glint, int i) {
         if (data == null) return;
-        data.light = light;
-        var rotated = displayContext == ItemDisplayContext.FIXED && data.width * 1.5f >= data.height;
+        data.lightCoords = light;
+        var rotated = displayContext == ItemDisplayContext.FIXED && data.boundingBoxWidth * 1.5f >= data.boundingBoxHeight;
         var centered = !rotated && displayContext == ItemDisplayContext.FIXED || displayContext == ItemDisplayContext.GUI;
-        matrices.push();
-        matrices.translate(0.5, rotated || centered ? 0.5 : 0.0, 0.5);
+        poseStack.pushPose();
+        poseStack.translate(0.5, rotated || centered ? 0.5 : 0.0, 0.5);
         if (rotated) {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
+            poseStack.mulPose(Axis.XP.rotationDegrees(90));
+            poseStack.mulPose(Axis.YP.rotationDegrees(180));
         }
         if (displayContext != ItemDisplayContext.HEAD) {
-            var scale = 1 / Math.max(1, Math.max(data.width, data.height));
-            matrices.scale(scale, scale, scale);
+            var scale = 1 / Math.max(1, Math.max(data.boundingBoxWidth, data.boundingBoxHeight));
+            poseStack.scale(scale, scale, scale);
         }
         if (centered)
-            matrices.translate(0, -data.height / 2, 0);
+            poseStack.translate(0, -data.boundingBoxHeight / 2, 0);
         if (rotated)
-            matrices.translate(0, -1 / 16.0, 0);
-        entityRenderDispatcher.render(data, UNKNOWN_OBJECT, 0.0, 0.0, 0.0, matrices, queue);
-        matrices.pop();
+            poseStack.translate(0, -1 / 16.0, 0);
+        entityRenderDispatcher.submit(data, UNKNOWN_OBJECT, 0.0, 0.0, 0.0, poseStack, submitNodeCollector);
+        poseStack.popPose();
     }
 
     @Override
-    public void collectVertices(Set<Vector3f> vertices) {
+    public void getExtents(Consumer<Vector3fc> consumer) {
 
     }
 
     @Override
-    public EntityRenderState getData(ItemStack stack) {
-        var data = EntityCache.get(stack, MinecraftClient.getInstance().world);
+    public EntityRenderState extractArgument(ItemStack stack) {
+        var data = EntityCache.get(stack, Minecraft.getInstance().level);
         if (data == null) return null;
-        var camera = MinecraftClient.getInstance().getCameraEntity();
+        var camera = Minecraft.getInstance().getCameraEntity();
         if (camera != null)
-            data.age = camera.age + MinecraftClient.getInstance().getRenderTickCounter().getTickProgress(false);
+            data.ageInTicks = camera.tickCount + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
         return data;
     }
 
@@ -74,13 +74,13 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
         public static final MapCodec<EntityItemModelRenderer.Unbaked> CODEC = MapCodec.unit(new EntityItemModelRenderer.Unbaked());
 
         @Override
-        public MapCodec<EntityItemModelRenderer.Unbaked> getCodec() {
+        public MapCodec<EntityItemModelRenderer.Unbaked> type() {
             return CODEC;
         }
 
         @Override
-        public SpecialModelRenderer<?> bake(BakeContext context) {
-            return new EntityItemModelRenderer(MinecraftClient.getInstance().getEntityRenderDispatcher());
+        public SpecialModelRenderer<?> bake(BakingContext context) {
+            return new EntityItemModelRenderer(Minecraft.getInstance().getEntityRenderDispatcher());
         }
     }
 }

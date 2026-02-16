@@ -1,36 +1,36 @@
 package archives.tater.gentlyholds;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.TypedEntityData;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.Level;
 
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public class EntityCache {
-    private static final Map<World, Map<TypedEntityData<EntityType<?>>, EntityRenderState>> CACHE = new WeakHashMap<>();
+    private static final Map<Level, Map<TypedEntityData<EntityType<?>>, EntityRenderState>> CACHE = new WeakHashMap<>();
 
-    public static EntityRenderState get(ItemStack stack, World world) {
-        var entityData = stack.get(DataComponentTypes.ENTITY_DATA);
+    public static EntityRenderState get(ItemStack stack, Level level) {
+        var entityData = stack.get(DataComponents.ENTITY_DATA);
         if (entityData == null) return null;
-        return get(entityData, world);
+        return get(entityData, level);
     }
 
-    public static EntityRenderState get(TypedEntityData<EntityType<?>> data, World world) {
+    public static EntityRenderState get(TypedEntityData<EntityType<?>> data, Level level) {
         return CACHE
-                .computeIfAbsent(world, _w -> new WeakHashMap<>())
+                .computeIfAbsent(level, _w -> new WeakHashMap<>())
                 .computeIfAbsent(data, nbt1 -> {
-                    var entity = EntityItem.entityOf(data, world);
+                    var entity = EntityItem.entityOf(data, level);
                     @SuppressWarnings("unchecked")
-                    var renderer = (EntityRenderer<Entity, EntityRenderState>) MinecraftClient.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+                    var renderer = (EntityRenderer<Entity, EntityRenderState>) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
                     var state = renderer.createRenderState();
-                    renderer.updateRenderState(entity, state, 1f);
+                    renderer.extractRenderState(entity, state, 1f);
                     return state;
                 });
     }
