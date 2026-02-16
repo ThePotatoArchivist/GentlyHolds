@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.storage.TagValueOutput;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static net.minecraft.util.Mth.wrapDegrees;
 
@@ -94,6 +94,14 @@ public class EntityItem extends Item {
     public Component getName(ItemStack stack) {
         var data = stack.get(DataComponents.ENTITY_DATA);
         return data == null ? super.getName(stack) : data.type().getDescription();
+    }
+
+    @Override
+    public void inventoryTick(ItemStack itemStack, ServerLevel level, Entity owner, @Nullable EquipmentSlot slot) {
+        if (owner.getRandom().nextInt(1000) == 0 && entityOf(itemStack, level) instanceof Mob mob) {
+            mob.snapTo(owner.position());
+            mob.playAmbientSound();
+        }
     }
 
     public static ItemStack from(Entity entity) {
