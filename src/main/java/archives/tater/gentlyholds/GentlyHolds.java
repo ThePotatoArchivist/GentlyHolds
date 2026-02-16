@@ -31,9 +31,16 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.equipment.Equippable;
+
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class GentlyHolds implements ModInitializer {
@@ -49,6 +56,9 @@ public class GentlyHolds implements ModInitializer {
 	}
 
 	public static final GentlyHoldsConfig CONFIG = GentlyHoldsConfig.createToml(FabricLoader.getInstance().getConfigDir(), "", MOD_ID, GentlyHoldsConfig.class);
+
+	private static @Nullable Set<EntityType<?>> entityWhitelist;
+	private static @Nullable Set<EntityType<?>> entityBlacklist;
 
 	public static final DataComponentType<Unit> UNINITIALIZED = Registry.register(
 			BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -71,7 +81,7 @@ public class GentlyHolds implements ModInitializer {
 					.title(Component.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
 					.displayItems((displayContext, entries) -> {
-						if (!GentlyHolds.CONFIG.creativeTab) return;
+						if (!CONFIG.creativeTab) return;
 						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.eggs().spliterator(), false).map(spawnEggItem -> spawnEggItem.getType(spawnEggItem.getDefaultInstance())).toList();
 						BuiltInRegistries.ENTITY_TYPE.forEach(entityType -> {
 							if (entityType.canSerialize() && entityType.getCategory() != MobCategory.MISC && !entityType.is(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.is(MISC_LIVING)))
@@ -81,8 +91,24 @@ public class GentlyHolds implements ModInitializer {
 					.build()
 	);
 
+	private static Set<EntityType<?>> loadIds(Collection<String> rawIds) {
+		return rawIds.stream()
+				.map(Identifier::tryParse)
+				.filter(Objects::nonNull)
+				.map(BuiltInRegistries.ENTITY_TYPE::getOptional)
+				.flatMap(Optional::stream)
+				.collect(Collectors.toSet());
+	}
+
 	public static boolean canPickup(Player player, Entity target) {
-		return target.getBbWidth() <= GentlyHolds.CONFIG.maxWidth && target.getBbHeight() <= GentlyHolds.CONFIG.maxHeight && GentlyHolds.CONFIG.entityRestriction.canPickup(player, target);
+		if (entityBlacklist == null) entityBlacklist = loadIds(CONFIG.entityBlacklist);
+		if (entityWhitelist == null) entityWhitelist = loadIds(CONFIG.entityWhitelist);
+
+		return entityWhitelist.contains(target.getType()) ||
+				!entityBlacklist.contains(target.getType())
+						&& target.getBbWidth() <= CONFIG.maxWidth
+						&& target.getBbHeight() <= CONFIG.maxHeight
+						&& CONFIG.entityRestriction.canPickup(player, target);
 	}
 
 	@Override
@@ -91,7 +117,7 @@ public class GentlyHolds implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		if (GentlyHolds.CONFIG.canWearHat)
+		if (CONFIG.canWearHat)
 			DefaultItemComponentEvents.MODIFY.register(context -> {
 				context.modify(ENTITY_ITEM, builder -> builder.set(
 						DataComponents.EQUIPPABLE,
@@ -102,7 +128,7 @@ public class GentlyHolds implements ModInitializer {
 		UseEntityCallback.EVENT.register((playerEntity, level, hand, entity, entityHitResult) -> {
 			if (!playerEntity.isSecondaryUseActive()) return InteractionResult.PASS;
 			if (entity instanceof Player) return InteractionResult.PASS;
-			if (GentlyHolds.CONFIG.emptyHands && (!playerEntity.getMainHandItem().isEmpty() || !playerEntity.getOffhandItem().isEmpty())) return InteractionResult.PASS;
+			if (CONFIG.emptyHands && (!playerEntity.getMainHandItem().isEmpty() || !playerEntity.getOffhandItem().isEmpty())) return InteractionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.parentMob : entity;
 			if (!canPickup(playerEntity, targetEntity)) return InteractionResult.PASS;
 			if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
