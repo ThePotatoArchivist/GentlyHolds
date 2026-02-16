@@ -1,10 +1,11 @@
 package archives.tater.gentlyholds;
 
-import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
+import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -24,6 +25,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Unit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +43,8 @@ public class GentlyHolds implements ModInitializer {
 		return Identifier.of(MOD_ID, path);
 	}
 
+    public static final GentlyHoldsConfig CONFIG = GentlyHoldsConfig.createToml(FabricLoader.getInstance().getConfigDir(), "", MOD_ID, GentlyHoldsConfig.class);
+
 	public static final ComponentType<Unit> UNINITIALIZED = Registry.register(
 			Registries.DATA_COMPONENT_TYPE,
 			id("uninitialized"),
@@ -52,7 +56,7 @@ public class GentlyHolds implements ModInitializer {
 	public static final Item ENTITY_ITEM = Registry.register(
 			Registries.ITEM,
 			id("entity_item"),
-			new EntityItem(new Item.Settings().equipmentSlot((livingEntity, stack) -> GentlyHoldsConfig.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
+			new EntityItem(new Item.Settings().equipmentSlot((livingEntity, stack) -> GentlyHolds.CONFIG.canWearHat ? EquipmentSlot.HEAD : EquipmentSlot.MAINHAND))
 	);
 
 	public static final ItemGroup ENTITIES = Registry.register(
@@ -62,7 +66,7 @@ public class GentlyHolds implements ModInitializer {
 					.displayName(Text.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.PIG))
 					.entries((displayContext, entries) -> {
-						if (!GentlyHoldsConfig.itemGroup) return;
+						if (!GentlyHolds.CONFIG.creativeTab) return;
 						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.getAll().spliterator(), false).map(spawnEggItem -> spawnEggItem.getEntityType(ENTITY_ITEM.getDefaultStack())).toList();
 						Registries.ENTITY_TYPE.forEach(entityType -> {
 							if (entityType.isSaveable() && entityType.getSpawnGroup() != SpawnGroup.MISC && !entityType.isIn(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.isIn(MISC_LIVING)))
@@ -73,7 +77,7 @@ public class GentlyHolds implements ModInitializer {
 	);
 
 	public static boolean canPickup(PlayerEntity player, Entity target) {
-		return target.getWidth() <= GentlyHoldsConfig.maxWidth && target.getHeight() <= GentlyHoldsConfig.maxHeight && GentlyHoldsConfig.entityRestriction.canPickup(player, target);
+		return target.getWidth() <= GentlyHolds.CONFIG.maxWidth && target.getHeight() <= GentlyHolds.CONFIG.maxHeight && GentlyHolds.CONFIG.entityRestriction.canPickup(player, target);
 	}
 
 	@Override
@@ -81,11 +85,10 @@ public class GentlyHolds implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
-		MidnightConfig.init(MOD_ID, GentlyHoldsConfig.class);
 		UseEntityCallback.EVENT.register((playerEntity, world, hand, entity, entityHitResult) -> {
 			if (!playerEntity.shouldCancelInteraction()) return ActionResult.PASS;
 			if (entity instanceof PlayerEntity) return ActionResult.PASS;
-			if (GentlyHoldsConfig.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
+			if (GentlyHolds.CONFIG.emptyHands && (!playerEntity.getMainHandStack().isEmpty() || !playerEntity.getOffHandStack().isEmpty())) return ActionResult.PASS;
 			var targetEntity = entity instanceof EnderDragonPart part ? part.owner : entity;
 			if (!canPickup(playerEntity, targetEntity)) return ActionResult.PASS;
 			if (world.isClient) return ActionResult.SUCCESS;

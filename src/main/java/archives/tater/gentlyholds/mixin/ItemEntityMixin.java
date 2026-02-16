@@ -2,7 +2,6 @@ package archives.tater.gentlyholds.mixin;
 
 import archives.tater.gentlyholds.EntityItem;
 import archives.tater.gentlyholds.GentlyHolds;
-import archives.tater.gentlyholds.GentlyHoldsConfig;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,7 +37,7 @@ public abstract class ItemEntityMixin extends Entity {
     private void spawnEntity(CallbackInfo ci) {
         if (getWorld().isClient || itemAge != 0) return;
         var stack = getStack();
-        if (!GentlyHoldsConfig.spawnDrop || !stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
+        if (!GentlyHolds.CONFIG.spawnDrop || !stack.isOf(GentlyHolds.ENTITY_ITEM)) return;
         var entity = EntityItem.entityOf(stack, getWorld());
         if (entity == null) return;
         var velocity = getVelocity();
