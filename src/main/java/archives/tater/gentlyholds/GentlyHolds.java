@@ -1,9 +1,9 @@
 package archives.tater.gentlyholds;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -17,18 +17,16 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.equipment.Equippable;
 
@@ -40,8 +38,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class GentlyHolds implements ModInitializer {
 	public static final String MOD_ID = "gentlyholds";
@@ -66,9 +64,11 @@ public class GentlyHolds implements ModInitializer {
 			DataComponentType.<Unit>builder().persistent(Unit.CODEC).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).build()
 	);
 
-	public static final TagKey<EntityType<?>> MISC_LIVING = TagKey.create(Registries.ENTITY_TYPE, id("misc_living"));
+	private static Item registerItem(ResourceKey<Item> key, Function<Item.Properties, Item> factory, Item.Properties properties) {
+		return Registry.register(BuiltInRegistries.ITEM, key, factory.apply(properties.setId(key)));
+	}
 
-	public static final Item ENTITY_ITEM = Items.registerItem(
+	public static final Item ENTITY_ITEM = registerItem(
 			ResourceKey.create(Registries.ITEM, id("entity_item")),
 			EntityItem::new,
 			new Item.Properties()
@@ -77,16 +77,17 @@ public class GentlyHolds implements ModInitializer {
 	public static final CreativeModeTab ENTITIES = Registry.register(
 			BuiltInRegistries.CREATIVE_MODE_TAB,
 			id("entities"),
-			FabricItemGroup.builder()
+			FabricCreativeModeTab.builder()
 					.title(Component.translatable("itemGroup." + MOD_ID + ".entities"))
 					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
-					.displayItems((displayContext, entries) -> {
+					.displayItems((_, entries) -> {
 						if (!CONFIG.creativeTab) return;
-						var spawnEggTypes = StreamSupport.stream(SpawnEggItem.eggs().spliterator(), false).map(spawnEggItem -> spawnEggItem.getType(spawnEggItem.getDefaultInstance())).toList();
-						BuiltInRegistries.ENTITY_TYPE.forEach(entityType -> {
-							if (entityType.canSerialize() && entityType.getCategory() != MobCategory.MISC && !entityType.is(ConventionalEntityTypeTags.BOSSES) && (spawnEggTypes.contains(entityType) || entityType.is(MISC_LIVING)))
-								entries.accept(EntityItem.fromType(entityType));
-						});
+						BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SPAWN_EGGS).stream()
+								.flatMap(holder -> holder.value().getDisplayItems().stream())
+								.map(SpawnEggItem::getType)
+								.filter(Objects::nonNull)
+								.filter(type -> !BuiltInRegistries.ENTITY_TYPE.wrapAsHolder(type).is(ConventionalEntityTypeTags.BOSSES))
+								.forEach(type -> entries.accept(EntityItem.fromType(type)));
 					})
 					.build()
 	);

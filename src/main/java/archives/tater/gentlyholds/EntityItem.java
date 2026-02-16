@@ -75,7 +75,7 @@ public class EntityItem extends Item {
         } else {
             var entity = entityOf(stack, level);
             if (entity == null) return InteractionResult.CONSUME;
-            entity.snapTo(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(level.random.nextFloat() * 360), 0f);
+            entity.snapTo(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, wrapDegrees(level.getRandom().nextFloat() * 360), 0f);
             if (entity instanceof Mob mob) {
                 mob.yHeadRot = mob.getYRot();
                 mob.yBodyRot = mob.getYRot();

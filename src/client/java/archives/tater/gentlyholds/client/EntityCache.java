@@ -25,7 +25,7 @@ public class EntityCache {
 
     public static @Nullable Entity get(TypedEntityData<EntityType<?>> data, Level level) {
         return CACHE
-                .computeIfAbsent(level, _w -> new WeakHashMap<>())
-                .computeIfAbsent(data, _d -> EntityItem.entityOf(data, level));
+                .computeIfAbsent(level, _ -> new WeakHashMap<>())
+                .computeIfAbsent(data, _ -> EntityItem.entityOf(data, level));
     }
 }

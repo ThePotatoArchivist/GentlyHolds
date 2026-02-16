@@ -89,10 +89,10 @@ public class GentlyHoldsConfig extends WrappedConfig {
             return switch (this) {
                 case ANY -> true;
                 case LIVING -> target instanceof LivingEntity;
-                case NON_BOSS -> target.showVehicleHealth() && !target.getType().is(ConventionalEntityTypeTags.BOSSES);
+                case NON_BOSS -> target.showVehicleHealth() && !target.is(ConventionalEntityTypeTags.BOSSES);
                 case NON_MONSTER -> target.showVehicleHealth() && !(target instanceof Enemy);
-                case NOT_AGGROED -> target.showVehicleHealth() && !target.getType().is(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof Mob mobEntity) || getTarget(mobEntity) == null);
-                case NOT_AGGROED_PLAYER -> target.showVehicleHealth() && !target.getType().is(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof Mob mobEntity) || getTarget(mobEntity) != player);
+                case NOT_AGGROED -> target.showVehicleHealth() && !target.is(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof Mob mobEntity) || getTarget(mobEntity) == null);
+                case NOT_AGGROED_PLAYER -> target.showVehicleHealth() && !target.is(ConventionalEntityTypeTags.BOSSES) && (!(target instanceof Mob mobEntity) || getTarget(mobEntity) != player);
                 case ANIMAL -> target instanceof Animal || target instanceof WaterAnimal || target instanceof AmbientCreature;
                 case OWNED -> target instanceof OwnableEntity tameable && tameable.getOwner() == player;
             };
