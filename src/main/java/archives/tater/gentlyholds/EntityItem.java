@@ -104,6 +104,13 @@ public class EntityItem extends Item {
         }
     }
 
+    @Override
+    public String getCreatorNamespace(ItemStack stack) {
+        var entityData = stack.get(DataComponents.ENTITY_DATA);
+        if (entityData == null) return super.getCreatorNamespace(stack);
+        return EntityType.getKey(entityData.type()).getNamespace();
+    }
+
     public static ItemStack from(Entity entity) {
         TagValueOutput writeView;
         try (var logging = new ProblemReporter.ScopedCollector(entity.problemPath(), GentlyHolds.LOGGER)) {
