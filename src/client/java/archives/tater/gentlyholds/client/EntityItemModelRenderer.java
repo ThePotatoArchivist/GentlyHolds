@@ -5,16 +5,17 @@ import net.fabricmc.api.Environment;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 import org.joml.Vector3fc;
@@ -25,37 +26,36 @@ import java.util.function.Consumer;
 import static java.lang.Math.max;
 import static java.util.Objects.requireNonNull;
 
-public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRenderState> {
+public record EntityItemModelRenderer(
+        EntityRenderDispatcher entityRenderDispatcher,
+        boolean rotated, // displayContext == ItemDisplayContext.FIXED
+        boolean centered, // displayContext == ItemDisplayContext.FIXED || displayContext == ItemDisplayContext.GUI;
+        boolean shrink // displayContext != ItemDisplayContext.HEAD
+) implements SpecialModelRenderer<EntityRenderState> {
 
-    private final EntityRenderDispatcher entityRenderDispatcher;
-
-    private static final CameraRenderState UNKNOWN_OBJECT = new CameraRenderState();
-
-    public EntityItemModelRenderer(EntityRenderDispatcher entityRenderDispatcher) {
-        this.entityRenderDispatcher = entityRenderDispatcher;
-    }
+    private static final CameraRenderState CAMERA_RENDER_STATE = new CameraRenderState();
 
     @Override
-    public void submit(@Nullable EntityRenderState data, ItemDisplayContext displayContext, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int light, int overlay, boolean glint, int i) {
-        if (data == null) return;
-        data.lightCoords = light;
-        var rotated = displayContext == ItemDisplayContext.FIXED && data.boundingBoxWidth * 1.5f >= data.boundingBoxHeight;
-        var centered = !rotated && displayContext == ItemDisplayContext.FIXED || displayContext == ItemDisplayContext.GUI;
+    public void submit(@Nullable EntityRenderState argument, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, int overlayCoords, boolean hasFoil, int outlineColor) {
+        if (argument == null) return;
+        argument.lightCoords = lightCoords;
+        var rotated = this.rotated && argument.boundingBoxWidth * 1.5f >= argument.boundingBoxHeight;
+        var centered = !rotated && this.centered;
         poseStack.pushPose();
         poseStack.translate(0.5, rotated || centered ? 0.5 : 0.0, 0.5);
         if (rotated) {
             poseStack.mulPose(Axis.XP.rotationDegrees(90));
             poseStack.mulPose(Axis.YP.rotationDegrees(180));
         }
-        if (displayContext != ItemDisplayContext.HEAD) {
-            var scale = 1 / max(1, max(data.boundingBoxWidth, data.boundingBoxHeight));
+        if (shrink) {
+            var scale = 1 / max(1, max(argument.boundingBoxWidth, argument.boundingBoxHeight));
             poseStack.scale(scale, scale, scale);
         }
         if (centered)
-            poseStack.translate(0, -data.boundingBoxHeight / 2, 0);
+            poseStack.translate(0, -argument.boundingBoxHeight / 2, 0);
         if (rotated)
             poseStack.translate(0, -1 / 16.0, 0);
-        entityRenderDispatcher.submit(data, UNKNOWN_OBJECT, 0.0, 0.0, 0.0, poseStack, submitNodeCollector);
+        entityRenderDispatcher.submit(argument, CAMERA_RENDER_STATE, 0.0, 0.0, 0.0, poseStack, submitNodeCollector);
         poseStack.popPose();
     }
 
@@ -79,8 +79,16 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
     }
 
     @Environment(EnvType.CLIENT)
-    public record Unbaked() implements SpecialModelRenderer.Unbaked {
-        public static final MapCodec<EntityItemModelRenderer.Unbaked> CODEC = MapCodec.unit(new EntityItemModelRenderer.Unbaked());
+    public record Unbaked(
+            boolean rotated, // displayContext == ItemDisplayContext.FIXED
+            boolean centered, // displayContext == ItemDisplayContext.FIXED || displayContext == ItemDisplayContext.GUI;
+            boolean shrink // displayContext != ItemDisplayContext.HEAD
+    ) implements SpecialModelRenderer.Unbaked<EntityRenderState> {
+        public static final MapCodec<EntityItemModelRenderer.Unbaked> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                Codec.BOOL.fieldOf("rotated").forGetter(Unbaked::rotated),
+                Codec.BOOL.fieldOf("centered").forGetter(Unbaked::centered),
+                Codec.BOOL.fieldOf("shrink").forGetter(Unbaked::shrink)
+        ).apply(instance, Unbaked::new));
 
         @Override
         public MapCodec<EntityItemModelRenderer.Unbaked> type() {
@@ -88,8 +96,8 @@ public class EntityItemModelRenderer implements SpecialModelRenderer<EntityRende
         }
 
         @Override
-        public SpecialModelRenderer<?> bake(BakingContext context) {
-            return new EntityItemModelRenderer(Minecraft.getInstance().getEntityRenderDispatcher());
+        public SpecialModelRenderer<EntityRenderState> bake(BakingContext context) {
+            return new EntityItemModelRenderer(Minecraft.getInstance().getEntityRenderDispatcher(), rotated, centered, shrink);
         }
     }
 }

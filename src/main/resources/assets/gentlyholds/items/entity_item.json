@@ -1,9 +1,57 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "model": {
-      "type": "gentlyholds:entity"
-    },
-    "base": "gentlyholds:item/entity_item"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "fixed",
+        "model": {
+          "type": "minecraft:special",
+          "model": {
+            "type": "gentlyholds:entity",
+            "rotated": true,
+            "centered": true,
+            "shrink": true
+          },
+          "base": "gentlyholds:item/entity_item"
+        }
+      },
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:special",
+          "model": {
+            "type": "gentlyholds:entity",
+            "rotated": false,
+            "centered": true,
+            "shrink": true
+          },
+          "base": "gentlyholds:item/entity_item"
+        }
+      },
+      {
+        "when": "head",
+        "model": {
+          "type": "minecraft:special",
+          "model": {
+            "type": "gentlyholds:entity",
+            "rotated": false,
+            "centered": false,
+            "shrink": false
+          },
+          "base": "gentlyholds:item/entity_item"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "model": {
+        "type": "gentlyholds:entity",
+        "rotated": false,
+        "centered": false,
+        "shrink": true
+      },
+      "base": "gentlyholds:item/entity_item"
+    }
   }
 }
