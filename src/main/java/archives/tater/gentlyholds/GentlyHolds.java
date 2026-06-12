@@ -21,6 +21,7 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.player.Player;
@@ -79,7 +80,7 @@ public class GentlyHolds implements ModInitializer {
 			id("entities"),
 			FabricCreativeModeTab.builder()
 					.title(Component.translatable("itemGroup." + MOD_ID + ".entities"))
-					.icon(() -> EntityItem.fromType(EntityType.CREEPER))
+					.icon(() -> EntityItem.fromType(EntityTypes.CREEPER))
 					.displayItems((_, entries) -> {
 						if (!CONFIG.creativeTab) return;
 						BuiltInRegistries.CREATIVE_MODE_TAB.get(CreativeModeTabs.SPAWN_EGGS).stream()

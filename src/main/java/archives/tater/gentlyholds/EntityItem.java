@@ -38,8 +38,15 @@ public class EntityItem extends Item {
             "HasVisualFire",
             Entity.TAG_GLOWING,
             LivingEntity.TAG_HURT_TIME,
-            LivingEntity.TAG_HURT_BY_TIMESTAMP,
-            LivingEntity.TAG_SLEEPING_POS
+            LivingEntity.TAG_DEATH_TIME,
+            LivingEntity.TAG_FALL_FLYING,
+            LivingEntity.TAG_SLEEPING_POS,
+            "last_hurt_by_player",
+            "last_hurt_by_player_memory_time",
+            "last_hurt_by_mob",
+            "ticks_since_last_hurt_by_mob",
+            "current_impulse_context_reset_grace_time",
+            "current_explosion_impact_pos"
     };
 
     public EntityItem(Properties settings) {
@@ -145,6 +152,14 @@ public class EntityItem extends Item {
         var entity = entityData.type().create(level, EntitySpawnReason.SPAWN_ITEM_USE);
         if (entity == null) return null;
         entityData.loadInto(entity);
+        return entity;
+    }
+
+    // Hopefully this doesn't cause issues
+    public static @Nullable Entity fakeEntityOf(TypedEntityData<EntityType<?>> entityData, Level level) {
+        var entity = entityOf(entityData, level);
+        if (entity == null) return null;
+        entity.setId(-1);
         return entity;
     }
 }
