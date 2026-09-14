@@ -11,11 +11,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
 import org.joml.Vector3fc;
@@ -66,12 +64,8 @@ public record EntityItemModelRenderer(
 
     @Override
     public @Nullable EntityRenderState extractArgument(ItemStack stack) {
-        var entity = EntityCache.get(stack, requireNonNull(Minecraft.getInstance().level));
-        if (entity == null) return null;
-        @SuppressWarnings("unchecked")
-        var renderer = (EntityRenderer<Entity, EntityRenderState>) entityRenderDispatcher.getRenderer(entity);
-        var state = renderer.createRenderState();
-        renderer.extractRenderState(entity, state, 1f);
+        var state = EntityCache.get(stack, requireNonNull(Minecraft.getInstance().level), entityRenderDispatcher);
+        if (state == null) return null;
         var camera = Minecraft.getInstance().getCameraEntity();
         if (camera != null)
             state.ageInTicks = camera.tickCount + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);

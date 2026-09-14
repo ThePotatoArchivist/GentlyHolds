@@ -58,8 +58,14 @@ public class GentlyHoldsConfig extends WrappedConfig {
     @DisplayNameConvention(NamingSchemes.TITLE_CASE)
     @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
     @ChangeWarning(Type.RequiresRestart)
-    @Comment("Add creative mode tab\nRequires reloading world")
+    @Comment("Add creative mode tab (client)\nRequires reloading world")
     public boolean creativeTab = true;
+
+    @DisplayNameConvention(NamingSchemes.TITLE_CASE)
+    @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
+    @Comment("If entity items should be animated in GUI (client)")
+    @Comment("May affect performance")
+    public boolean animated = true;
 
     @DisplayNameConvention(NamingSchemes.TITLE_CASE)
     @SerializedNameConvention(NamingSchemes.SNAKE_CASE)
