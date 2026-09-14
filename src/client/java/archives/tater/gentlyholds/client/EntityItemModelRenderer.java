@@ -44,8 +44,8 @@ public record EntityItemModelRenderer(
         poseStack.pushPose();
         poseStack.translate(0.5, rotated || centered ? 0.5 : 0.0, 0.5);
         if (rotated) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(90));
-            poseStack.mulPose(Axis.YP.rotationDegrees(180));
+            poseStack.rotate(Axis.XP.rotationDegrees(90));
+            poseStack.rotate(Axis.YP.rotationDegrees(180));
         }
         if (shrink) {
             var scale = 1 / max(1, max(argument.boundingBoxWidth, argument.boundingBoxHeight));
