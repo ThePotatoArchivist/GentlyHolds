@@ -49,7 +49,7 @@ public class EntityCache {
 
     private static <T extends Entity, S extends EntityRenderState> S createRenderState(T entity, EntityRenderer<T, S> renderer) {
         var state = renderer.createRenderState();
-        renderer.extractRenderState((T) entity, state, 1f);
+        renderer.extractRenderState(entity, state, 1f);
         return state;
     }
 }
